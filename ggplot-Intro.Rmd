@@ -1,0 +1,311 @@
+---
+title: "ggplot- Intro"
+author: "Syed Faraz Ali"
+date: "10/2/2018"
+output:
+  html_document:
+    code_folding: show
+    theme: readable
+    toc: true
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+      toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+library(magrittr)
+library(dplyr)
+library(readr)
+library(tidyr)
+```
+
+#1.Understanding the ggplot index 
+
+* Unlike base graphics, ggplot works with dataframes and not individual vectors
+* All the data needed to make the plot is typically contained within the dataframe supplied to the ggplot() itself or can be supplied to respective geoms (layers).
+* The second noticeable feature is that you can keep enhancing the plot by adding more layers (and themes) to an existing plot created using the ggplot() function.
+
+
+```{r}
+options(scipen = 999) # turn off scientific notation like 1e+06
+library(ggplot2)
+data("midwest", package = "ggplot2") # load the data
+
+# Explore the data
+
+midwest  %>%  dim
+midwest %>% head
+```
+
+Initialising a ggplot 
+
+```{r}
+ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) 
+```
+
+Notes:
+
+* Blank ggplot 
+* no points or lines since nothing is specified - whether a scatterplot or a linechart 
+
+
+#2.Simple Scatterplot 
+
+```{r}
+ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) +
+        geom_point()
+```
+
+
+## Adding a smoothing layer using geom_smooth()
+```{r}
+g <- ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) + 
+        geom_point()+
+        geom_smooth(method = "lm")
+plot(g)
+```
+
+
+
+#3.Adjusting the X and Y limits 
+
+## Method - 1 : By deleting the points outside the range 
+
+This can be done using the xlim() and ylim() . 
+
+```{r}
+g <- ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) +
+        geom_point()+
+        geom_smooth(method = "lm")
+
+# Delete the points outside the limits
+
+g + xlim(c(0,0.1)) + ylim(c(0,1000000)) # deletes points
+
+# Same thing 
+g + xlim(0,0.1) + ylim(0,1000000) # deletes points
+```
+
+
+## Method 2 : Zooming in 
+
+Change the X and Y axis limits by zooming in to the region of interest without deleting the points. This is done using coord_cartesian().
+
+```{r}
+g <- ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) +
+        geom_point()+
+        geom_smooth(method = "lm")
+g1 <- g + coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000)) # zooms in 
+plot(g1)
+```
+
+
+Here the line of best fit will not change since all the points were considered for plotting the line of best fit. 
+
+#4.Change the Title and Axis Labels 
+
+Use the labs() function with title, x and y arguments. Also, we can use ggtitle(). xlab(). ylab() 
+
+```{r}
+g <- ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) +
+        geom_point() +
+        geom_smooth(method = "lm") 
+g1 <- g + coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000)) # zooms in 
+# plot(g1)
+
+# Add title and Labels
+g1 + labs(title = "Area Vs Population", subtitle = "From midwest dataset", y = "Population", x = "Area", caption = "Midwest Demographics")
+
+# or 
+
+g1 + ggtitle(label = "Area Vs Population", subtitle = "From midwest dataset") + xlab(label = "Area") + ylab(label = "Population")
+```
+
+Here's the full function call 
+```{r}
+ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) +
+        geom_point()+
+        geom_smooth(method = "lm")+
+        coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000))+
+        labs(title = "Area Vs Population", subtitle = "From midwest dataset", x = "Area", y = "Population", caption = "Midwest Demographics")
+
+# or
+
+ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) + 
+        geom_point()+
+        geom_smooth(method = "lm")+
+        coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000))+
+        ggtitle(label = "Area Vs Population", subtitle = "From Midwest dataset ")+
+        xlab(label = "Area")+
+        ylab(label = "Population")+
+        labs(caption = "Midwest Demographics")
+        
+```
+
+#5. Changing the color and size of points 
+
+We can change the aesthetics of a geom layer by modifying the respective geoms. 
+
+```{r}
+ggplot(data = midwest, mapping = aes(x = area, y = poptotal))+
+        geom_point(col = "steelblue", size = 3)+
+        geom_smooth(method = "lm", col = "firebrick")+
+        coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000))+
+        labs(title = "Area Vs Population", subtitle = "From midwest dataset", y = "Population", x = "Area", caption = "Midwest Demographics")
+        
+```
+
+## Changing the color to reflect categories in another column 
+
+If we want to color to change based on anotehr column in the source dataset, it must be specified inside the aes() function 
+
+```{r}
+gg <- ggplot(data = midwest, mapping = aes(x = area, y = poptotal))+
+        geom_point(aes(col= state), size = 3)+
+        geom_smooth(method = "lm", col = "firebrick", size = 2) +
+        coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000))+
+        labs(title="Area Vs Population", subtitle="From midwest dataset", y="Population", x="Area", caption="Midwest Demographics")
+plot(gg)
+```
+
+The legend is added automatically. If needed, it can be removed by setting the legend.position to None from within a theme() function.
+
+```{r}
+gg+theme(legend.position = "None") # remove legend
+```
+
+Also, you can change the color pallette entirely 
+
+```{r}
+gg+scale_color_brewer(palette = "Set1") # change color pallette
+```
+
+More of such pallettes can be found in RcolorBrewer package
+
+#6. Changing the X-Axis texts and Ticks Location 
+
+## Changing the X and Y Axis Text and its Location
+
+This involves two aspects : breaks and labels
+
+Step1 : Set the breaks 
+
+```{r}
+gg <- ggplot(data = midwest, mapping = aes(x = area, y = poptotal))+
+        geom_point(aes(col= state), size = 3)+
+        geom_smooth(method = "lm", col = "firebrick", size = 2) +
+        coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000))+
+        labs(title="Area Vs Population", subtitle="From midwest dataset", y="Population", x="Area", caption="Midwest Demographics")
+
+# Change breaks 
+gg+scale_x_continuous(breaks = seq(0,0.1,0.01))
+
+```
+
+
+Step 2 : Change the labels 
+
+Change the labels at the axis ticks. labels take a vactor of the same length as breaks 
+
+```{r}
+gg <- ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) +
+        geom_point(aes(col = state), size =3)+
+        geom_smooth(method = "lm", col = "firebrick", size =2)+
+        coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000))+
+        labs(title="Area Vs Population", subtitle="From midwest dataset", y="Population", x="Area", caption="Midwest Demographics")
+
+# Change breaks + label
+gg+scale_x_continuous(breaks = seq(0,0.1,0.01), labels = letters[1:11])
+
+```
+
+If you need to reverse the scale, use scale_x_reverse().
+
+```{r}
+gg <- ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) +
+        geom_point(aes(col = state), size =3)+
+        geom_smooth(method = "lm", col = "firebrick", size =2)+
+        coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000))+
+        labs(title="Area Vs Population", subtitle="From midwest dataset", y="Population", x="Area", caption="Midwest Demographics")
+
+# Reverse X axis scale
+
+gg + scale_x_reverse()
+
+```
+
+
+
+## Writing customised texts for axis labels, by formatting the original values
+
+Method 1: Using sprintf()
+
+Method 2 : Using a custom defined function 
+
+```{r}
+gg <- ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) +
+        geom_point(aes(col = state), size =3)+
+        geom_smooth(method = "lm", col = "firebrick", size =2)+
+        coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000))+
+        labs(title="Area Vs Population", subtitle="From midwest dataset", y="Population", x="Area", caption="Midwest Demographics")
+
+# Change Axis texts 
+
+gg + scale_x_continuous(breaks=seq(0, 0.1, 0.01), labels = sprintf("%1.2f%%", seq(0, 0.1, 0.01))) + 
+        scale_y_continuous(breaks=seq(0, 1000000, 200000), labels = function(x){paste0(x/1000, 'K')})
+```
+
+
+## Customizing the entire theme in one shot using pre-built themes 
+
+```{r}
+# Base plot 
+
+gg <- ggplot(data = midwest, mapping = aes(x = area, y = poptotal)) +
+        geom_point(aes(col = state), size =3)+
+        geom_smooth(method = "lm", col = "firebrick", size =2)+
+        coord_cartesian(xlim = c(0,0.1), ylim = c(0,1000000))+
+        labs(title="Area Vs Population", subtitle="From midwest dataset", y="Population", x="Area", caption="Midwest Demographics")
+
+
+gg <- gg + scale_x_continuous(breaks=seq(0, 0.1, 0.01))
+
+# method 1 : Using theme_set()
+
+theme_set(theme_classic()) # not run 
+plot(gg)
+
+
+# method 2 : adding theme layer itself 
+
+gg+theme_bw() + labs(subtitle = "BW Theme")
+gg+theme_classic()+labs(subtitle = "Classic theme")
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
